@@ -27,12 +27,19 @@ export const Login = () => {
         mode: 'onChange',
     });
 
-    const onSubmit = (values) => {
-        // console.log(values);
-        dispatch(fetchAuth(values));
-    };
+    const onSubmit = async (values) => {
+        const data = await dispatch(fetchAuth(values));
 
-    // console.log('auth', isAuth);
+        if(!data.payload){
+            return alert('Ошибка авторизации');
+        }
+
+        if('token' in data.payload){
+            window.localStorage.setItem('token', data.payload.token);
+        } else {
+            alert('Ошибка авторизации');
+        }
+    };
 
     if (isAuth) {
         return <Navigate to="/" />;
