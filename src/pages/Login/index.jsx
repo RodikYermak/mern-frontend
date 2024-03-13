@@ -4,8 +4,7 @@ import TextField from '@mui/material/TextField';
 import Paper from '@mui/material/Paper';
 import Button from '@mui/material/Button';
 import { useForm } from 'react-hook-form';
-import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';// import { useNavigate } from 'react-router-dom'
 import { Navigate } from 'react-router-dom';
 
 import styles from './Login.module.scss';
@@ -17,7 +16,6 @@ export const Login = () => {
     const {
         register,
         handleSubmit,
-        setError,
         formState: { errors, isValid },
     } = useForm({
         defaultValues: {
@@ -68,7 +66,7 @@ export const Login = () => {
                     {...register('password', { required: 'Укажите пароль' })}
                     fullWidth
                 />
-                <Button type="submit" size="large" variant="contained" fullWidth>
+                <Button disabled={!isValid} type="submit" size="large" variant="contained" fullWidth>
                     Войти
                 </Button>
             </form>
