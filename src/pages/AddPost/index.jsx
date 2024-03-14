@@ -9,22 +9,78 @@ import styles from './AddPost.module.scss';
 import { useSelector } from 'react-redux';
 import { selectIsAuth } from '../../redux/slices/auth';
 
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
+
+import axios from '../../axios';
 
 export const AddPost = () => {
+    const { id } = useParams();
+    const navigate = useNavigate();
     const isAuth = useSelector(selectIsAuth);
-    const imageUrl = '';
+    // const imageUrl = '';
+    const [isLoading, setLoading] = React.useState(false);
     const [value, setValue] = React.useState('');
     const [title, setTitle] = React.useState('');
     const [tags, setTags] = React.useState('');
+    const [imageUrl, setImageUrl] = React.useState('');
     const inputFileRef = React.useRef(null);
 
-    const handleChangeFile = () => {};
+    const isEditing = Boolean(id);
 
-    const onClickRemoveImage = () => {};
+    const handleChangeFile = async (event) => {
+        try {
+            const formData = new FormData();
+            const file = event.target.files[0];
+            formData.append('image', file);
+            const { data } = await axios.post('/upload', formData);
+            setImageUrl(data.url);
+        } catch (e) {
+            console.log(e);
+            alert('Ошибка при загрузке файла');
+        }
+    };
+
+    const onClickRemoveImage = () => {
+        setImageUrl('');
+    };
 
     const onChange = React.useCallback((value) => {
         setValue(value);
+    }, []);
+
+    const onSubmit = async () => {
+        try {
+            setLoading(true);
+
+            const fields = {
+                title,
+                imageUrl,
+                tags,
+                text: value,
+            };
+
+            const { data } = isEditing
+                ? await axios.patch(`/posts/${id}`, fields)
+                : await axios.post('/posts', fields);
+
+            const _id = isEditing ? id :data._id;
+
+            navigate(`/posts/${_id}`);
+        } catch (e) {
+            console.warn(e);
+            alert('Ошибка при создании поста');
+        }
+    };
+
+    React.useEffect(() => {
+        if (id) {
+            axios.get(`/posts/${id}`).then((res) => {
+                setTitle(res.data.title);
+                setTags(res.data.tags.join(', '));
+                setValue(res.data.text);
+                setImageUrl(res.data.imageUrl);
+            });
+        }
     }, []);
 
     const options = React.useMemo(
@@ -55,16 +111,16 @@ export const AddPost = () => {
             </Button>
             <input ref={inputFileRef} type="file" onChange={handleChangeFile} hidden />
             {imageUrl && (
-                <Button variant="contained" color="error" onClick={onClickRemoveImage}>
-                    Удалить
-                </Button>
-            )}
-            {imageUrl && (
-                <img
-                    className={styles.image}
-                    src={`http://localhost:4444${imageUrl}`}
-                    alt="Uploaded"
-                />
+                <>
+                    <Button variant="contained" color="error" onClick={onClickRemoveImage}>
+                        Удалить
+                    </Button>
+                    <img
+                        className={styles.image}
+                        src={`http://localhost:4444${imageUrl}`}
+                        alt="Uploaded"
+                    />
+                </>
             )}
             <br />
             <br />
@@ -91,8 +147,8 @@ export const AddPost = () => {
                 options={options}
             />
             <div className={styles.buttons}>
-                <Button size="large" variant="contained">
-                    Опубликовать
+                <Button onClick={onSubmit} size="large" variant="contained">
+                    {isEditing ? 'Сохранить' : 'Опубликовать'}
                 </Button>
                 <a href="/">
                     <Button size="large">Отмена</Button>
